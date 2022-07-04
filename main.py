@@ -1,7 +1,6 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
+import numpy as np
 
 Data = pd.read_csv('toy_dataset.csv')
 '''For checking null Values'''
@@ -47,35 +46,35 @@ loaded_model = pickle.load(open(filename, 'rb'))
 result = loaded_model.score(x_test, y_test)
 print(result)
 
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, request
+import json
 
 app = Flask(__name__)
 app.static_folder = 'static'
 
 
-@app.route("/")
+@app.route("/", methods=['POST', 'GET'])
 def home():
-    return render_template("index.html")
+    if request.method == 'GET':
+        data = "hello Welcome"
+        return jsonify({'data': data})
 
 
-@app.route("/", methods=['POST'])
+@app.route("/bFlipper")
 def bFlipper(output=None):
-    Input = []
-    City = request.form.get('city_name')
-    Gender = request.form.get('Gender')
-    Age = request.form.get('Age')
-    Income = request.form.get('Income')
+    City = request.args.get('city_name')
+    Gender = request.args.get('Gender')
+    Age = request.args.get('Age')
+    Income = request.args.get('Income')
 
-    Input.append(City)
-    Input.append(Gender)
-    Input.append(Age)
-    Input.append(Income)
+    Input = pd.DataFrame({'City': [City], 'Gender': [Gender], 'Age': [Age], 'Income': [Income]})
 
-    y_prediction = loaded_model.predict([Input])
+    y_prediction = loaded_model.predict(np.array(Input).tolist()).tolist()
+
     print(y_prediction)
 
-    return 'Illness is available: {}'.format(bool(y_prediction))
+    return jsonify({'Illness is Available': y_prediction})
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True,host="0.0.0.0", port=8080)
